@@ -80,26 +80,35 @@ export async function createInDataProvider(
   logger.log("createInDataProvider", { dataProvider, resource, values });
   const reportItems: ReportItem[] = [];
   if (disableCreateMany) {
-    const items = await createInDataProviderFallback(dataProvider, resource, values);
+    const items = await createInDataProviderFallback(
+      dataProvider,
+      resource,
+      values
+    );
     reportItems.push(...items);
     return items;
   }
   try {
     const response = await dataProvider.createMany(resource, { data: values });
     reportItems.push({
-      value: null, success: true, response: response
-    })
+      value: null,
+      success: true,
+      response: response,
+    });
   } catch (error) {
-    const providerMethodNotFoundErrors = [
-      "Unknown dataProvider",
-      "createMany",
-    ];
-    const shouldTryFallback = doesErrorContainString(error, providerMethodNotFoundErrors);
+    const providerMethodNotFoundErrors = ["Unknown dataProvider", "createMany"];
+    const shouldTryFallback = doesErrorContainString(
+      error,
+      providerMethodNotFoundErrors
+    );
     const apiError = !shouldTryFallback;
     if (apiError) {
       reportItems.push({
-        value: null, err: error, success: false, response: null
-      })
+        value: null,
+        err: error,
+        success: false,
+        response: null,
+      });
     }
     if (shouldTryFallback) {
       logger.log(
@@ -107,7 +116,11 @@ export async function createInDataProvider(
         "createMany not found on data provider (you may need to implement it see: https://github.com/benwinding/react-admin-import-csv#reducing-requests): using fallback instead"
       );
       try {
-        const items = await createInDataProviderFallback(dataProvider, resource, values);
+        const items = await createInDataProviderFallback(
+          dataProvider,
+          resource,
+          values
+        );
         reportItems.push(...items);
       } catch (error) {
         logger.error("createInDataProvider", error);
@@ -123,14 +136,45 @@ async function createInDataProviderFallback(
   values: any[]
 ): Promise<ReportItem[]> {
   const reportItems: ReportItem[] = [];
+
   await Promise.all(
-    values.map((value) =>
-      dataProvider
-        .create(resource, { data: value })
-        .then((res) =>
-          reportItems.push({ value: value, success: true, response: res })
-        )
-        .catch((err) => reportItems.push({ value, success: false, err: err }))
+    values.map(
+      (value) => {
+        if ("Tags" in value) {
+          const tags = value.Tags;
+          console.log(tags); 
+          delete value.Tags;
+          dataProvider
+            .create(
+              resource,
+              { data: value },
+              {
+                onSuccess: (data) => {
+                  tags.forEach((id) => {
+                    dataProvider.create("ProductGroupTag", {
+                      data: {
+                        ProductGroupId: data.id,
+                        TagId: id,
+                      },
+                    });
+                  });
+                },
+              }
+            )
+            .then((res) =>
+              reportItems.push({ value: value, success: true, response: res })
+            )
+            .catch((err) =>
+              reportItems.push({ value, success: false, err: err })
+            );
+        }
+      }
+      // dataProvider
+      //   .create(resource, { data: value })
+      //   .then((res) =>
+      //     reportItems.push({ value: value, success: true, response: res })
+      //   )
+      //   .catch((err) => reportItems.push({ value, success: false, err: err }))
     )
   );
   return reportItems;
@@ -153,26 +197,38 @@ async function updateInDataProvider(
     ids,
   });
   if (disableUpdateMany) {
-    const items = await updateInDataProviderFallback(dataProvider, resource, values);
+    const items = await updateInDataProviderFallback(
+      dataProvider,
+      resource,
+      values
+    );
     return items;
   }
   const reportItems: ReportItem[] = [];
   try {
-    const response = await dataProvider.updateManyArray(resource, { ids: ids, data: values });
+    const response = await dataProvider.updateManyArray(resource, {
+      ids: ids,
+      data: values,
+    });
     reportItems.push({
-      value: null, success: true, response: response
-    })
+      value: null,
+      success: true,
+      response: response,
+    });
   } catch (error) {
-    const providerMethodNotFoundErrors = [
-      "Unknown dataProvider",
-      "updateMany",
-    ];
-    const shouldTryFallback = doesErrorContainString(error, providerMethodNotFoundErrors);
+    const providerMethodNotFoundErrors = ["Unknown dataProvider", "updateMany"];
+    const shouldTryFallback = doesErrorContainString(
+      error,
+      providerMethodNotFoundErrors
+    );
     const apiError = !shouldTryFallback;
     if (apiError) {
       reportItems.push({
-        value: null, err: error, success: false, response: null
-      })
+        value: null,
+        err: error,
+        success: false,
+        response: null,
+      });
     }
     if (shouldTryFallback) {
       logger.log(
@@ -180,7 +236,11 @@ async function updateInDataProvider(
         "updateManyArray not found on data provider (you may need to implement it see: https://github.com/benwinding/react-admin-import-csv#reducing-requests): using fallback instead"
       );
       try {
-        const items = await updateInDataProviderFallback(dataProvider, resource, values);
+        const items = await updateInDataProviderFallback(
+          dataProvider,
+          resource,
+          values
+        );
         reportItems.push(...items);
       } catch (error) {
         logger.error("updateInDataProvider", error);
@@ -199,7 +259,11 @@ async function updateInDataProviderFallback(
   await Promise.all(
     values.map((value) =>
       dataProvider
-        .update(resource, { id: value.id, data: value, previousData: null as any })
+        .update(resource, {
+          id: value.id,
+          data: value,
+          previousData: null as any,
+        })
         .then((res) =>
           reportItems.push({ value: value, success: true, response: res })
         )
@@ -210,7 +274,10 @@ async function updateInDataProviderFallback(
 }
 
 function doesErrorContainString(error: any, stringsToCheck: string[]): boolean {
-  const errorString = (!!error && typeof error === 'object' && error?.toString()) || '';
-  const shouldTryFallback = stringsToCheck.some(stringToCheck => errorString.includes(stringToCheck));
+  const errorString =
+    (!!error && typeof error === "object" && error?.toString()) || "";
+  const shouldTryFallback = stringsToCheck.some((stringToCheck) =>
+    errorString.includes(stringToCheck)
+  );
   return shouldTryFallback;
 }
