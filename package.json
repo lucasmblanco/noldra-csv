@@ -1,11 +1,9 @@
 {
-  "name": "react-admin-import-csv",
+  "name": "noldra-csv",
   "version": "4.0.0",
   "description": "CSV import button for react-admin",
-  "repository": "https://github.com/benwinding/react-admin-import-csv",
-  "homepage": "https://github.com/benwinding/react-admin-import-csv",
-  "author": "Ben Winding",
-  "license": "MIT",
+  "repository": "https://github.com/lucasmblanco/noldra-csv",
+  "homepage": "https://github.com/lucasmblanco/noldra-csv",
   "files": [
     "*.md",
     "lib",
