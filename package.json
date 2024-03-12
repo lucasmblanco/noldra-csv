@@ -1,6 +1,6 @@
 {
   "name": "@lucasmblanco/noldra-csv",
-  "version": "1.0.1",
+  "version": "1.0.6",
   "description": "CSV import button for react-admin",
   "repository": "https://github.com/lucasmblanco/noldra-csv",
   "homepage": "https://github.com/lucasmblanco/noldra-csv",

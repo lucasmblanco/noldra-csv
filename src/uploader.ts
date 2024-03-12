@@ -138,46 +138,51 @@ async function createInDataProviderFallback(
   const reportItems: ReportItem[] = [];
 
   await Promise.all(
-    values.map(
-      (value) => {
-        if ("Tags" in value) {
-          const tags = value.Tags;
-          console.log(tags); 
-          delete value.Tags;
-          dataProvider
-            .create(
-              resource,
-              { data: value },
-          )
-            .then((res) =>
-            {
-              tags.forEach(id => {
-                dataProvider.create('ProductGroupTag', {
-                  data: {
-                    ProductGroupTagId: value.id,
-                    TagId: id
-                  }
-                }).catch((err) => {
-                  throw err;
-                })
+    values.map((value) => {
+      if ("Tags" in value) {
+        const tags = value.Tags;
+        delete value.Tags;
+        console.log("tag borrado");
+        dataProvider
+          .create(resource, { data: value })
+          .then(async (res) => {
+            await Promise.all(
+              tags.map((tag) => {
+                console.log("dentro de tag");
+                console.log(tag);
+                dataProvider
+                  .create("ProductGroupTag", {
+                    data: {
+                      ProductGroupTagId: value.id,
+                      TagId: tag.id,
+                    },
+                  })
+                  .then((res) => console.log("creado con exito"))
+                  .catch((err) => {
+                    throw err;
+                  });
               })
-              return reportItems.push({ value: value, success: true, response: res })
-            }
-            )
-            .catch((err) =>
-              reportItems.push({ value, success: false, err: err })
             );
-        } else {
-          dataProvider
-        .create(resource, { data: value })
-        .then((res) =>
-          reportItems.push({ value: value, success: true, response: res })
-        )
-        .catch((err) => reportItems.push({ value, success: false, err: err }))
-        }
+            return reportItems.push({
+              value: value,
+              success: true,
+              response: res,
+            });
+          })
+          .catch((err) =>
+            reportItems.push({ value, success: false, err: err })
+          );
+      } else {
+        dataProvider
+          .create(resource, { data: value })
+          .then((res) =>
+            reportItems.push({ value: value, success: true, response: res })
+          )
+          .catch((err) =>
+            reportItems.push({ value, success: false, err: err })
+          );
       }
-      
-    )
+    })
   );
   return reportItems;
 }
