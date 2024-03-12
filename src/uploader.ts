@@ -148,33 +148,35 @@ async function createInDataProviderFallback(
             .create(
               resource,
               { data: value },
-              {
-                onSuccess: (data) => {
-                  tags.forEach((id) => {
-                    dataProvider.create("ProductGroupTag", {
-                      data: {
-                        ProductGroupId: data.id,
-                        TagId: id,
-                      },
-                    });
-                  });
-                },
-              }
-            )
+          )
             .then((res) =>
-              reportItems.push({ value: value, success: true, response: res })
+            {
+              tags.forEach(id => {
+                dataProvider.create('ProductGroupTag', {
+                  data: {
+                    ProductGroupTagId: value.id,
+                    TagId: id
+                  }
+                }).catch((err) => {
+                  throw err;
+                })
+              })
+              return reportItems.push({ value: value, success: true, response: res })
+            }
             )
             .catch((err) =>
               reportItems.push({ value, success: false, err: err })
             );
+        } else {
+          dataProvider
+        .create(resource, { data: value })
+        .then((res) =>
+          reportItems.push({ value: value, success: true, response: res })
+        )
+        .catch((err) => reportItems.push({ value, success: false, err: err }))
         }
       }
-      // dataProvider
-      //   .create(resource, { data: value })
-      //   .then((res) =>
-      //     reportItems.push({ value: value, success: true, response: res })
-      //   )
-      //   .catch((err) => reportItems.push({ value, success: false, err: err }))
+      
     )
   );
   return reportItems;

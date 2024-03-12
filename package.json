@@ -1,6 +1,6 @@
 {
   "name": "@lucasmblanco/noldra-csv",
-  "version": "4.0.0",
+  "version": "1.0.1",
   "description": "CSV import button for react-admin",
   "repository": "https://github.com/lucasmblanco/noldra-csv",
   "homepage": "https://github.com/lucasmblanco/noldra-csv",
@@ -12,7 +12,6 @@
     "src"
   ],
   "main": "lib/index",
-  "module": "esm/index.js",
   "scripts": {
     "build": "yarn run build-cjs && yarn run build-esm",
     "build-watch": "yarn build-for-demo -w",
