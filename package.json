@@ -25,7 +25,7 @@
     "test:silent": "npx jest 2>&1 | grep '●'",
     "test:badges": "jest-coverage-badges",
     "clean": "rimraf dist",
-    "prepare": "yarn build-cjs"
+    "prepare": "yarn build"
   },
   "peerDependencies": {
     "react-admin": "4.x"
