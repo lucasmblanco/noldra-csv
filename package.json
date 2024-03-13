@@ -1,10 +1,11 @@
 {
-  "name": "@lucasmblanco/noldra-csv",
-  "version": "1.0.6",
+  "name": "react-admin-import-csv",
+  "version": "4.0.0",
   "description": "CSV import button for react-admin",
-  "repository": "https://github.com/lucasmblanco/noldra-csv",
-  "homepage": "https://github.com/lucasmblanco/noldra-csv",
-  "scope": "@lucasmblanco",
+  "repository": "https://github.com/benwinding/react-admin-import-csv",
+  "homepage": "https://github.com/benwinding/react-admin-import-csv",
+  "author": "Ben Winding",
+  "license": "MIT",
   "files": [
     "*.md",
     "lib",
@@ -12,6 +13,7 @@
     "src"
   ],
   "main": "lib/index",
+  "module": "esm/index.js",
   "scripts": {
     "build": "yarn run build-cjs && yarn run build-esm",
     "build-watch": "yarn build-for-demo -w",
@@ -22,7 +24,8 @@
     "test:watch": "jest --watch",
     "test:silent": "npx jest 2>&1 | grep '●'",
     "test:badges": "jest-coverage-badges",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "prepare": "yarn run build"
   },
   "peerDependencies": {
     "react-admin": "4.x"

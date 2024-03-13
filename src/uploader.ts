@@ -139,49 +139,65 @@ async function createInDataProviderFallback(
 
   await Promise.all(
     values.map((value) => {
-      if ("Tags" in value) {
-        const tags = value.Tags;
-        delete value.Tags;
-        console.log("tag borrado");
-        dataProvider
-          .create(resource, { data: value })
-          .then(async (res) => {
+      const properties = value.Properties;
+      const tags = value.Tags;
+      console.log(properties);
+      delete value.Tags;
+      delete value.Properties;
+      dataProvider
+        .create(resource, { data: value })
+        .then(async (res) => {
+          if (tags.length > 0) {
             await Promise.all(
               tags.map((tag) => {
-                console.log("dentro de tag");
-                console.log(tag);
                 dataProvider
                   .create("ProductGroupTag", {
                     data: {
-                      ProductGroupTagId: value.id,
+                      ProductGroupId: res.data.id,
                       TagId: tag.id,
                     },
                   })
-                  .then((res) => console.log("creado con exito"))
+                  .then((res) => console.log("creado tag con exito"))
                   .catch((err) => {
                     throw err;
                   });
               })
             );
-            return reportItems.push({
-              value: value,
-              success: true,
-              response: res,
-            });
-          })
-          .catch((err) =>
-            reportItems.push({ value, success: false, err: err })
-          );
-      } else {
-        dataProvider
-          .create(resource, { data: value })
-          .then((res) =>
-            reportItems.push({ value: value, success: true, response: res })
-          )
-          .catch((err) =>
-            reportItems.push({ value, success: false, err: err })
-          );
-      }
+          }
+          if (properties.length > 0) {
+            await Promise.all(
+              tags.map((tag) => {
+                dataProvider
+                  .create("ProductGroupProperties", {
+                    data: {
+                      ProductGroupId: res.data.id,
+                      Properties: tag.id,
+                    },
+                  })
+                  .then((res) => console.log("creado prop con exito"))
+                  .catch((err) => {
+                    throw err;
+                  });
+              })
+            );
+          }
+          return reportItems.push({
+            value: value,
+            success: true,
+            response: res,
+          });
+        })
+        .catch((err) => reportItems.push({ value, success: false, err: err }));
+      // } else {
+      //   dataProvider
+      //     .create(resource, { data: value })
+      //     .then((res) =>
+      //       reportItems.push({ value: value, success: true, response: res })
+      //     )
+      //     .catch((err) =>
+      //       reportItems.push({ value, success: false, err: err })
+      //     );
+      // }
     })
   );
   return reportItems;
