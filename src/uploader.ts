@@ -139,6 +139,7 @@ async function createInDataProviderFallback(
 
   await Promise.all(
     values.map((value) => {
+      console.log(value); 
       const properties = value.Properties;
       const tags = value.Tags;
       console.log(properties);
