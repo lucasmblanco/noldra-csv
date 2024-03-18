@@ -243,6 +243,7 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                                             },
                                                         })
                                                             .then(function (res) {
+                                                            console.log(res);
                                                             return {
                                                                 res: res,
                                                                 success: true,
