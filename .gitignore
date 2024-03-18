@@ -4,7 +4,7 @@ dist-ssr
 esm
 lib
 yarn*
-!yarn.lock
+yarn.lock
 coverage/*
 !coverage/badge-lines.svg
 !coverage/coverage-summary.json
