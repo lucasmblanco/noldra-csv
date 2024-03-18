@@ -161,9 +161,9 @@ async function createInDataProviderFallback(
         };
         return valueWithError;
       } else {
-        const { Tags, Properties, ...cleanValue } = value;
+        const { Tags = [], Properties = [], ...filteredValue  } = value;
         const processedValue = dataProvider
-          .create(resource, { data: cleanValue })
+          .create(resource, { data: filteredValue  })
           .then(async (res) => {
             const ogData = csvItems?.[i];
             ogData.Status = ["The resource was added successfully."];
@@ -184,17 +184,15 @@ async function createInDataProviderFallback(
                         TagId: id,
                       },
                     })
-                    .then(
-                      (res) => {
-                        const tagResult = {
-                          Tag: {
-                            res: res,
-                            success: true,
-                          },
-                        };
-                        return tagResult;
-                      }
-                    )
+                    .then((res) => {
+                      const tagResult = {
+                        Tag: {
+                          res: res,
+                          success: true,
+                        },
+                      };
+                      return tagResult;
+                    })
                     .catch((err) => {
                       const tagResult = {
                         Tag: {

@@ -16,7 +16,7 @@ export async function processCsvFile(
   if (!file) {
     return;
   }
-  const csvData = await getCsvData(file, parseConfig); // values sin tocar
+  const csvData = await getCsvData(file, parseConfig); 
   const csvDataProcessed = processCsvData(csvData)
   return [csvDataProcessed, csvData];
 }
