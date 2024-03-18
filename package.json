@@ -1,6 +1,6 @@
 {
   "name": "@lucasmblanco/import-csv",
-  "version": "1.0.9",
+  "version": "1.0.71",
   "description": "CSV import button for react-admin",
   "repository": "https://github.com/lucasmblanco/import-csv",
   "homepage": "https://github.com/lucasmblanco/import-csv",

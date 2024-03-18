@@ -92,13 +92,13 @@ export async function CheckCSVValidation(
   translate: Translate,
   csvValues: any[],
   validateRow?: ValidateRowFunction
-): Promise<void> {
+): Promise<any[] | void> {
   const logger = makeLogger(logging);
   if (!validateRow) {
     return;
   }
   try {
-    await Promise.all(csvValues.map(validateRow));
+    return await Promise.all(csvValues.map(validateRow));
   } catch (error) {
     logger.error("CheckCSVValidation", { csvValues }, error);
     throw translate("csv.parsing.failedValidateRow");
@@ -114,8 +114,9 @@ export async function GetCSVItems(
   const logger = makeLogger(logging);
   let csvValues: any[] | undefined;
   try {
-    csvValues = await processCsvFile(file, parseConfig);
-    return csvValues || [];
+    const [values, ogData] = await processCsvFile(file, parseConfig) as any[][];
+    csvValues = values;
+    return [csvValues || [], ogData]; // aca devolver csvValues y dataog 
   } catch (error) {
     logger.error("GetCSVItems", { csvValues }, error);
     throw translate("csv.parsing.invalidCsvDocument");

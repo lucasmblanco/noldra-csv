@@ -5,7 +5,7 @@ import over from "ramda/src/over.js";
 type PapaString = string | null | number;
 
 const setObjectValue = (object: any, path: PapaString, value: any): any => {
-  const lensPathFunction = lensPath((!!path ? path+'' : '').split("."));
+  const lensPathFunction = lensPath((!!path ? path + "" : "").split("."));
   return over(lensPathFunction, () => value, object || {});
 };
 
@@ -16,8 +16,9 @@ export async function processCsvFile(
   if (!file) {
     return;
   }
-  const csvData = await getCsvData(file, parseConfig);
-  return processCsvData(csvData);
+  const csvData = await getCsvData(file, parseConfig); // values sin tocar
+  const csvDataProcessed = processCsvData(csvData)
+  return [csvDataProcessed, csvData];
 }
 
 export async function getCsvData(
@@ -44,7 +45,6 @@ export async function getCsvData(
 }
 
 export function processCsvData(data: PapaString[][]): any[] {
-
   if (Array.isArray(data[0])) {
     const topRowKeys: PapaString[] = data[0];
 
@@ -58,13 +58,37 @@ export function processCsvData(data: PapaString[][]): any[] {
       return value;
     });
     return dataRows;
-  }
-  else {
+  } else {
     const dataRows: any[] = [];
-    data.forEach( (obj) => {
-        let value: any = {}
-        for (let key in obj) value = setObjectValue(value, key, obj[key]);
-        dataRows.push(value);
+    data.forEach((obj) => {
+      let value: any = {};
+      for (let key in obj) value = setObjectValue(value, key, obj[key]);
+      dataRows.push(value);
+    });
+    return dataRows;
+  }
+}
+
+export function processCsvDataAddError(data: PapaString[][]): any[] {
+  if (Array.isArray(data[0])) {
+    const topRowKeys: PapaString[] = data[0];
+
+    const dataRows = data.slice(1).map((row) => {
+      let value: any = {};
+
+      topRowKeys.forEach((key, index) => {
+        value = setObjectValue(value, key, row[index]);
+      });
+
+      return value;
+    });
+    return dataRows;
+  } else {
+    const dataRows: any[] = [];
+    data.forEach((obj) => {
+      let value: any = {};
+      for (let key in obj) value = setObjectValue(value, key, obj[key]);
+      dataRows.push(value);
     });
     return dataRows;
   }

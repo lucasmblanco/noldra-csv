@@ -8,7 +8,6 @@ coverage/*
 !coverage/badge-lines.svg
 !coverage/coverage-summary.json
 package-lock*
-.yarn 
 
 # misc
 .DS_Store
