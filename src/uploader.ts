@@ -140,6 +140,13 @@ export async function createInDataProvider(
   return reportItems;
 }
 
+interface Value {
+  success: boolean;
+  res: any;
+  value: any;
+  attributes?: { Tag?: any[]; Properties?: any[] };
+}
+
 async function createInDataProviderFallback(
   dataProvider: DataProvider,
   resource: string,
@@ -161,20 +168,20 @@ async function createInDataProviderFallback(
         };
         return valueWithError;
       } else {
-        const { Tags = [], Properties = [], ...filteredValue  } = value;
+        const { Tags = [], Properties = [], ...filteredValue } = value;
         const processedValue = dataProvider
-          .create(resource, { data: filteredValue  })
+          .create(resource, { data: filteredValue })
           .then(async (res) => {
-            const ogData = csvItems?.[i];
-            ogData.Status = ["The resource was added successfully."];
-            const valueResult = {
+            const originalEntry = Object.assign({}, csvItems?.[i], {
+              Status: ["The resource was added successfully."],
+            });
+            const valueResult: Value = {
               success: true,
               res: res,
-              value: ogData,
-              attributes: { Tag: {}, Properties: {} },
+              value: originalEntry,
             };
-
             if (Tags.length > 0) {
+              !valueResult.attributes && (valueResult.attributes = {});
               valueResult.attributes.Tag = await Promise.all(
                 Tags.map((id) => {
                   dataProvider
@@ -206,6 +213,7 @@ async function createInDataProviderFallback(
               );
             }
             if (Properties.length > 0) {
+              !valueResult.attributes && (valueResult.attributes = {});
               valueResult.attributes.Properties = await Promise.all(
                 Properties.map((property) => {
                   dataProvider
