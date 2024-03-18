@@ -160,7 +160,6 @@ async function createInDataProviderFallback(
         const originalEntry = Object.assign({}, csvItems?.[i], {
           Status: value.errors,
         });
-
         const valueWithError = {
           value: originalEntry,
           success: false,
@@ -183,7 +182,7 @@ async function createInDataProviderFallback(
             if (Tags.length > 0) {
               !valueResult.attributes && (valueResult.attributes = {});
               valueResult.attributes.Tag = await Promise.all(
-                Tags.map((id) => {
+                Tags.map((id: string) => {
                   dataProvider
                     .create("ProductGroupTag", {
                       data: {
@@ -215,7 +214,7 @@ async function createInDataProviderFallback(
             if (Properties.length > 0) {
               !valueResult.attributes && (valueResult.attributes = {});
               valueResult.attributes.Properties = await Promise.all(
-                Properties.map((property) => {
+                Properties.map((property: { id: string; value: string }) => {
                   dataProvider
                     .create("ProductGroupProperties", {
                       data: {
@@ -246,11 +245,14 @@ async function createInDataProviderFallback(
             return valueResult;
           })
           .catch((err) => {
+            const originalEntry = Object.assign({}, csvItems?.[i], {
+              Status: ["There was a problem when adding the resource."],
+            });
             const valueResult = {
               success: false,
               res: err,
               value: {
-                Status: ["There was a problem when adding the resource."],
+                Status: originalEntry,
               },
             };
             return valueResult;
