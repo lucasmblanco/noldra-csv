@@ -211,18 +211,14 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                                                 TagId: id,
                                                             },
                                                         })
-                                                            .then(function (res) {
-                                                            return {
-                                                                res: res,
-                                                                success: true,
-                                                            };
-                                                        })
-                                                            .catch(function (err) {
-                                                            return {
-                                                                res: err,
-                                                                success: false,
-                                                            };
-                                                        });
+                                                            .then(function (res) { return ({
+                                                            res: res,
+                                                            success: true,
+                                                        }); })
+                                                            .catch(function (err) { return ({
+                                                            res: err,
+                                                            success: false,
+                                                        }); });
                                                     }))];
                                             case 1:
                                                 _a.Tag = _c.sent();
@@ -242,19 +238,14 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                                                 DateUpdate: new Date(),
                                                             },
                                                         })
-                                                            .then(function (res) {
-                                                            console.log(res);
-                                                            return {
-                                                                res: res,
-                                                                success: true,
-                                                            };
-                                                        })
-                                                            .catch(function (err) {
-                                                            return {
-                                                                res: err,
-                                                                success: false,
-                                                            };
-                                                        });
+                                                            .then(function (res) { return ({
+                                                            res: res,
+                                                            success: true,
+                                                        }); })
+                                                            .catch(function (err) { return ({
+                                                            res: err,
+                                                            success: false,
+                                                        }); });
                                                     }))];
                                             case 3:
                                                 _b.Properties = _c.sent();

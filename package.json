@@ -5,6 +5,9 @@
   "repository": "https://github.com/lucasmblanco/react-admin-import-csv",
   "homepage": "https://github.com/lucasmblanco/react-admin-import-csv",
   "scope": "@lucasmblanco",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@lucasmblanco"
+  },
   "files": [
     "*.md",
     "lib",

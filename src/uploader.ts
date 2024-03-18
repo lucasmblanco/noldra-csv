@@ -190,18 +190,14 @@ async function createInDataProviderFallback(
                         TagId: id,
                       },
                     })
-                    .then((res) => {
-                      return {
-                        res: res,
-                        success: true,
-                      };
-                    })
-                    .catch((err) => {
-                      return {
-                        res: err,
-                        success: false,
-                      };
-                    });
+                    .then((res) => ({
+                      res: res,
+                      success: true,
+                    }))
+                    .catch((err) => ({
+                      res: err,
+                      success: false,
+                    }));
                 })
               );
             }
@@ -219,19 +215,14 @@ async function createInDataProviderFallback(
                         DateUpdate: new Date(),
                       },
                     })
-                    .then((res) => {
-                      console.log(res);
-                      return {
-                        res: res,
-                        success: true,
-                      };
-                    })
-                    .catch((err) => {
-                      return {
-                        res: err,
-                        success: false,
-                      };
-                    });
+                    .then((res) => ({
+                      res: res,
+                      success: true,
+                    }))
+                    .catch((err) => ({
+                      res: err,
+                      success: false,
+                    }));
                 })
               );
             }
