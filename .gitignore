@@ -10,6 +10,7 @@ coverage/*
 !coverage/coverage-summary.json
 package-lock*
 .vscode
+.github/*
 !vscode/extensions.json
 .idea
 .DS_Store
@@ -27,3 +28,4 @@ lerna-debug.log*
 *.sw?
 .env
 .vite
+.yarn
