@@ -3,6 +3,7 @@ import { SimpleLogger } from "./SimpleLogger";
 import { DataProvider } from "ra-core";
 import type { ParseConfig } from "papaparse";
 import { unparse } from "papaparse";
+import { report } from "process";
 
 let logger = new SimpleLogger("uploader", false);
 
@@ -160,15 +161,14 @@ async function createInDataProviderFallback(
         const originalEntry = Object.assign({}, csvItems?.[i], {
           Status: value.errors,
         });
-        const valueWithError = {
+        return {
           value: originalEntry,
           success: false,
           err: "Some fields contain errors.",
         };
-        return valueWithError;
       } else {
         const { Tags = [], Properties = [], ...filteredValue } = value;
-        const processedValue = dataProvider
+        return dataProvider
           .create(resource, { data: filteredValue })
           .then(async (res) => {
             const originalEntry = Object.assign({}, csvItems?.[i], {
@@ -191,22 +191,16 @@ async function createInDataProviderFallback(
                       },
                     })
                     .then((res) => {
-                      const tagResult = {
-                        Tag: {
-                          res: res,
-                          success: true,
-                        },
+                      return {
+                        res: res,
+                        success: true,
                       };
-                      return tagResult;
                     })
                     .catch((err) => {
-                      const tagResult = {
-                        Tag: {
-                          res: err,
-                          success: false,
-                        },
+                      return {
+                        res: err,
+                        success: false,
                       };
-                      return tagResult;
                     });
                 })
               );
@@ -226,18 +220,16 @@ async function createInDataProviderFallback(
                       },
                     })
                     .then((res) => {
-                      const PropertyResult = {
+                      return {
                         res: res,
                         success: true,
                       };
-                      return PropertyResult;
                     })
                     .catch((err) => {
-                      const PropertyResult = {
+                      return {
                         res: err,
                         success: false,
                       };
-                      return PropertyResult;
                     });
                 })
               );
@@ -248,19 +240,18 @@ async function createInDataProviderFallback(
             const originalEntry = Object.assign({}, csvItems?.[i], {
               Status: ["There was a problem when adding the resource."],
             });
-            const valueResult = {
+            return {
               success: false,
               res: err,
               value: {
                 Status: originalEntry,
               },
             };
-            return valueResult;
           });
-        return processedValue;
       }
     })
   ).then((res) => {
+    reportItems.push(...res);
     return unparse(res.map((res) => res.value));
   });
   return [reportItems, csvData];
