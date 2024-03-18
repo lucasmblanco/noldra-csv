@@ -188,9 +188,9 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                 return dataProvider
                                     .create(resource, { data: filteredValue })
                                     .then(function (res) { return __awaiter(_this, void 0, void 0, function () {
-                                    var originalEntry, valueResult, _a, _b;
-                                    return __generator(this, function (_c) {
-                                        switch (_c.label) {
+                                    var originalEntry, valueResult, Hola, _a;
+                                    return __generator(this, function (_b) {
+                                        switch (_b.label) {
                                             case 0:
                                                 originalEntry = Object.assign({}, csvItems === null || csvItems === void 0 ? void 0 : csvItems[i], {
                                                     Status: ["The resource was added successfully."],
@@ -202,7 +202,6 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                                 };
                                                 if (!(Tags_1.length > 0)) return [3 /*break*/, 2];
                                                 !valueResult.attributes && (valueResult.attributes = {});
-                                                _a = valueResult.attributes;
                                                 return [4 /*yield*/, Promise.all(Tags_1.map(function (id) {
                                                         dataProvider
                                                             .create("ProductGroupTag", {
@@ -221,12 +220,14 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                                         }); });
                                                     }))];
                                             case 1:
-                                                _a.Tag = _c.sent();
-                                                _c.label = 2;
+                                                Hola = _b.sent();
+                                                console.log(Hola);
+                                                valueResult.attributes.Tag = Hola;
+                                                _b.label = 2;
                                             case 2:
                                                 if (!(Properties_1.length > 0)) return [3 /*break*/, 4];
                                                 !valueResult.attributes && (valueResult.attributes = {});
-                                                _b = valueResult.attributes;
+                                                _a = valueResult.attributes;
                                                 return [4 /*yield*/, Promise.all(Properties_1.map(function (property) {
                                                         dataProvider
                                                             .create("ProductGroupProperties", {
@@ -248,8 +249,8 @@ function createInDataProviderFallback(dataProvider, resource, values, csvItems) 
                                                         }); });
                                                     }))];
                                             case 3:
-                                                _b.Properties = _c.sent();
-                                                _c.label = 4;
+                                                _a.Properties = _b.sent();
+                                                _b.label = 4;
                                             case 4: return [2 /*return*/, valueResult];
                                         }
                                     });

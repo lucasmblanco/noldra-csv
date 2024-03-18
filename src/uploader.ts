@@ -181,7 +181,7 @@ async function createInDataProviderFallback(
             };
             if (Tags.length > 0) {
               !valueResult.attributes && (valueResult.attributes = {});
-              valueResult.attributes.Tag = await Promise.all(
+              const Hola = await Promise.all(
                 Tags.map((id: string) => {
                   dataProvider
                     .create("ProductGroupTag", {
@@ -200,6 +200,8 @@ async function createInDataProviderFallback(
                     }));
                 })
               );
+              console.log(Hola); 
+              valueResult.attributes.Tag = Hola;
             }
             if (Properties.length > 0) {
               !valueResult.attributes && (valueResult.attributes = {});
