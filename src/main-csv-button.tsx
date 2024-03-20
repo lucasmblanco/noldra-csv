@@ -23,7 +23,8 @@ export const MainCsvImport = (props: any) => {
   const refresh = useRefresh();
   const translate = translateWrapper();
   const dataProvider = useDataProvider();
-  const resource = useResourceContext();
+  const resource = props.resource || useResourceContext();
+
 
   const {
     parseConfig,
@@ -78,6 +79,7 @@ export const MainCsvImport = (props: any) => {
       return;
     }
     setOpen(true);
+    
     async function processCSV(): Promise<[any[], boolean, any[]]> {
       // Is valid csv
       if (!file) {
@@ -209,13 +211,13 @@ export const MainCsvImport = (props: any) => {
     setFile(file);
   };
 
-  const notify = useNotify();
+  // const notify = useNotify();
   const handleClose = () => {
     logger.log("handleClose", { file });
     resetVars();
-    notify(translate("csv.dialogImport.alertClose", { fname: fileName }), {
-      type: "info",
-    });
+    // notify(translate("csv.dialogImport.alertClose", { fname: fileName }), {
+    //   type: "info",
+    // });
     refresh();
   };
 

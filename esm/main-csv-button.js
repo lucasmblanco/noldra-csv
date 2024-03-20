@@ -46,7 +46,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import React from "react";
-import { useRefresh, useNotify, useDataProvider, useResourceContext, } from "react-admin";
+import { useRefresh, useDataProvider, useResourceContext, } from "react-admin";
 import { SimpleLogger } from "./SimpleLogger";
 import { CheckCSVValidation, GetCSVItems, GetIdsColliding, } from "./import-controller";
 import { create, update } from "./uploader";
@@ -58,7 +58,7 @@ export var MainCsvImport = function (props) {
     var refresh = useRefresh();
     var translate = translateWrapper();
     var dataProvider = useDataProvider();
-    var resource = useResourceContext();
+    var resource = props.resource || useResourceContext();
     var _a = props, parseConfig = _a.parseConfig, preCommitCallback = _a.preCommitCallback, postCommitCallback = _a.postCommitCallback, validateRow = _a.validateRow, transformRows = _a.transformRows, disableCreateMany = _a.disableCreateMany, disableUpdateMany = _a.disableUpdateMany, disableGetMany = _a.disableGetMany, disableImportNew = _a.disableImportNew, disableImportOverwrite = _a.disableImportOverwrite;
     var disableNew = !!disableImportNew;
     var disableOverwrite = !!disableImportOverwrite;
@@ -215,13 +215,13 @@ export var MainCsvImport = function (props) {
         var file = e.target.files && e.target.files[0];
         setFile(file);
     };
-    var notify = useNotify();
+    // const notify = useNotify();
     var handleClose = function () {
         logger.log("handleClose", { file: file });
         resetVars();
-        notify(translate("csv.dialogImport.alertClose", { fname: fileName }), {
-            type: "info",
-        });
+        // notify(translate("csv.dialogImport.alertClose", { fname: fileName }), {
+        //   type: "info",
+        // });
         refresh();
     };
     var handleReplace = function () { return __awaiter(void 0, void 0, void 0, function () {

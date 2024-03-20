@@ -1,13 +1,10 @@
 {
   "name": "@lucasmblanco/react-admin-import-csv",
-  "version": "1.0.0",
+  "version": "1.0.11",
   "description": "CSV import button for react-admin",
   "repository": "https://github.com/lucasmblanco/react-admin-import-csv",
   "homepage": "https://github.com/lucasmblanco/react-admin-import-csv",
   "scope": "@lucasmblanco",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/@lucasmblanco"
-  },
   "files": [
     "*.md",
     "lib",

@@ -181,51 +181,50 @@ async function createInDataProviderFallback(
             };
             if (Tags.length > 0) {
               !valueResult.attributes && (valueResult.attributes = {});
-              const Hola = await Promise.all(
-                Tags.map((id: string) => {
-                  dataProvider
-                    .create("ProductGroupTag", {
-                      data: {
-                        ProductGroupId: res.data.id,
-                        TagId: id,
-                      },
-                    })
-                    .then((res) => ({
-                      res: res,
-                      success: true,
-                    }))
-                    .catch((err) => ({
-                      res: err,
-                      success: false,
-                    }));
+              valueResult.attributes.Tag = await Promise.all(
+                Tags.map(async (id: string) => {
+                  try {
+                    const createdTag = await dataProvider.create(
+                      "ProductGroupTag",
+                      {
+                        data: {
+                          ProductGroupId: res.data.id,
+                          TagId: id,
+                        },
+                      }
+                    );
+                    return { tag: createdTag, success: true };
+                  } catch (err) {
+                    return { success: false };
+                  }
                 })
               );
-              console.log(Hola); 
-              valueResult.attributes.Tag = Hola;
             }
             if (Properties.length > 0) {
               !valueResult.attributes && (valueResult.attributes = {});
               valueResult.attributes.Properties = await Promise.all(
-                Properties.map((property: { id: string; value: string }) => {
-                  dataProvider
-                    .create("ProductGroupProperties", {
-                      data: {
-                        ProductGroupId: res.data.id,
-                        PropertiesId: property.id,
-                        Value: property.value,
-                        // borrar
-                        DateUpdate: new Date(),
-                      },
-                    })
-                    .then((res) => ({
-                      res: res,
-                      success: true,
-                    }))
-                    .catch((err) => ({
-                      res: err,
-                      success: false,
-                    }));
-                })
+                Properties.map(
+                  async (property: { id: string; value: string }) => {
+                    try {
+                      const createdProperty = await dataProvider.create(
+                        "ProductGroupProperties",
+                        {
+                          data: {
+                            ProductGroupId: res.data.id,
+                            PropertiesId: property.id,
+                            Value: property.value,
+                            // borrar
+                            DateUpdate: new Date(),
+                          },
+                        }
+                      );
+                      return { property: createdProperty, success: true };
+                    } catch (err) {
+                      console.error("Error creating property:", err);
+                      return { success: false };
+                    }
+                  }
+                )
               );
             }
             return valueResult;
