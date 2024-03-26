@@ -154,6 +154,20 @@ export function CheckCSVValidation(logging, translate, csvValues, validateRow) {
         });
     });
 }
+// export async function CheckCSVValidationNew(
+//   // logging: boolean,
+//   translate: Translate,
+//   csvValues: any[],
+//   // validateRow?: ValidateRowFunction
+// ): Promise<any[] | void> {
+//   // const logger = makeLogger(logging);
+//   try {
+//     return await Promise.all(csvValues.map(validateRow));
+//   } catch (error) {
+//     // logger.error("CheckCSVValidation", { csvValues }, error);
+//     throw translate("csv.parsing.failedValidateRow");
+//   }
+// }
 export function GetCSVItems(logging, translate, file, parseConfig) {
     return __awaiter(this, void 0, void 0, function () {
         var logger, csvValues, _a, values, ogData, error_5;

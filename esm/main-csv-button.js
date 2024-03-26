@@ -48,7 +48,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import React from "react";
 import { useRefresh, useDataProvider, useResourceContext, } from "react-admin";
 import { SimpleLogger } from "./SimpleLogger";
-import { CheckCSVValidation, GetCSVItems, GetIdsColliding, } from "./import-controller";
+import { GetCSVItems, GetIdsColliding, } from "./import-controller";
 import { create, update } from "./uploader";
 import { translateWrapper } from "./translateWrapper";
 import { ImportCsvDialogStrategy } from "./components/import-csv-dialog-strategy";
@@ -100,9 +100,9 @@ export var MainCsvImport = function (props) {
                     var matchesIdNumber = collidingIdsNumbersSet.has(+item.id);
                     return !(matchesIdNumber || matchesIdString);
                 }
-                var _a, csvRows, ogData, csvItems, _b, csvItemsWithValidation, collidingIds, hasCollidingIds, collidingIdsStringsSet, collidingIdsNumbersSet, collidingIdsAsNumbers, allCollidingIdsAreNumbers, csvItemsNotColliding;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var _a, csvRows, ogData, csvItems, _b, csvNew, _c, collidingIds, hasCollidingIds, collidingIdsStringsSet, collidingIdsNumbersSet, collidingIdsAsNumbers, allCollidingIdsAreNumbers, csvItemsNotColliding;
+                return __generator(this, function (_d) {
+                    switch (_d.label) {
                         case 0:
                             // Is valid csv
                             if (!file) {
@@ -111,34 +111,47 @@ export var MainCsvImport = function (props) {
                             logger.log("Parsing CSV file");
                             return [4 /*yield*/, GetCSVItems(logging, translate, file, parseConfig)];
                         case 1:
-                            _a = _c.sent(), csvRows = _a[0], ogData = _a[1];
+                            _a = _d.sent(), csvRows = _a[0], ogData = _a[1];
                             if (!transformRows) return [3 /*break*/, 3];
                             return [4 /*yield*/, transformRows(csvRows)];
                         case 2:
-                            _b = _c.sent();
+                            _b = _d.sent();
                             return [3 /*break*/, 4];
                         case 3:
                             _b = csvRows;
-                            _c.label = 4;
+                            _d.label = 4;
                         case 4:
                             csvItems = _b;
-                            mounted && setValues(csvItems);
+                            if (!validateRow) return [3 /*break*/, 6];
+                            return [4 /*yield*/, Promise.all(csvItems.map(validateRow))];
+                        case 5:
+                            _c = _d.sent();
+                            return [3 /*break*/, 7];
+                        case 6:
+                            _c = csvItems;
+                            _d.label = 7;
+                        case 7:
+                            csvNew = _c;
+                            mounted && setValues(csvNew);
                             // Does CSV pass user validation
                             logger.log("Validating CSV file");
-                            return [4 /*yield*/, CheckCSVValidation(logging, translate, csvItems, validateRow)];
-                        case 5:
-                            csvItemsWithValidation = _c.sent();
-                            setValues(csvItems);
+                            // const csvItemsWithValidation = await CheckCSVValidation(
+                            //   logging,
+                            //   translate,
+                            //   csvItems,
+                            //   validateRow
+                            // );
+                            setValues(csvNew);
                             // Are there any import overwrites?
                             logger.log("Checking rows to import");
-                            return [4 /*yield*/, GetIdsColliding(logging, translate, dataProvider, csvItemsWithValidation, resourceName, disableGetMany)];
-                        case 6:
-                            collidingIds = _c.sent();
+                            return [4 /*yield*/, GetIdsColliding(logging, translate, dataProvider, csvNew, resourceName, disableGetMany)];
+                        case 8:
+                            collidingIds = _d.sent();
                             mounted && setIdsConflicting(collidingIds);
                             hasCollidingIds = !!collidingIds.length;
                             logger.log("Has colliding ids?", { hasCollidingIds: hasCollidingIds, collidingIds: collidingIds });
                             if (!hasCollidingIds) {
-                                return [2 /*return*/, [csvItemsWithValidation, hasCollidingIds, ogData]];
+                                return [2 /*return*/, [csvNew, hasCollidingIds, ogData]];
                             }
                             collidingIdsStringsSet = new Set(collidingIds.map(function (id) { return id + ""; }));
                             collidingIdsNumbersSet = new Set();
@@ -155,18 +168,25 @@ export var MainCsvImport = function (props) {
                             logger.log("Importing items which arent colliding", {
                                 csvItemsNotColliding: csvItemsNotColliding,
                             });
-                            return [2 /*return*/, [csvItemsNotColliding, hasCollidingIds, csvItems]];
+                            // const csvNewCheckErrors = csvNew.map((item: any) => {
+                            //   if (!item.report.getErrorStatus()) {
+                            //     console.log('validado correctamente');
+                            //     item.report.setDetails("The row was successfully validated");
+                            //   }
+                            //   return item;
+                            // })
+                            return [2 /*return*/, [csvNew, hasCollidingIds, csvItems]];
                     }
                 });
             });
         }
         processCSV()
             .then(function (_a) {
-            var csvItemsWithValidation = _a[0], hasCollidingIds = _a[1], ogData = _a[2];
+            var csvNew = _a[0], hasCollidingIds = _a[1], ogData = _a[2];
             return __awaiter(void 0, void 0, void 0, function () {
                 return __generator(this, function (_b) {
                     switch (_b.label) {
-                        case 0: return [4 /*yield*/, createRows(csvItemsWithValidation, ogData)];
+                        case 0: return [4 /*yield*/, createRows(csvNew, ogData)];
                         case 1:
                             _b.sent();
                             mounted && !hasCollidingIds && handleClose();

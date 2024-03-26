@@ -156,99 +156,209 @@ async function createInDataProviderFallback(
 ): Promise<any> {
   const reportItems: ReportItem[] = [];
   const csvData = await Promise.all(
-    values.map((value, i) => {
-      if (value.errors) {
-        const originalEntry = Object.assign({}, csvItems?.[i], {
-          Status: value.errors,
+    values.map(async (value, i) => {
+      if (value.report.getErrorStatus()) {
+        const processedData = Object.assign({}, csvItems?.[i], {
+          "Validation Status": value.report.getDetails(),
+          Status:
+            "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
         });
         return {
-          value: originalEntry,
+          value: processedData,
           success: false,
-          err: "Some fields contain errors.",
+          err: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
         };
       } else {
-        const { Tags = [], Properties = [], ...filteredValue } = value;
-        return dataProvider
-          .create(resource, { data: filteredValue })
-          .then(async (res) => {
-            const originalEntry = Object.assign({}, csvItems?.[i], {
-              Status: ["The resource was added successfully."],
-            });
-            const valueResult: Value = {
-              success: true,
-              res: res,
-              value: originalEntry,
-            };
-            if (Tags.length > 0) {
-              !valueResult.attributes && (valueResult.attributes = {});
-              valueResult.attributes.Tag = await Promise.all(
-                Tags.map(async (id: string) => {
+        const { Tags = [], Properties = [], report, ...filteredValue } = value;
+        try {
+          const res = await dataProvider.create(resource, {
+            data: filteredValue,
+          });
+
+          const processedData = Object.assign({}, csvItems?.[i], {
+            "Validation Status": value.report.getDetails(),
+            Status: "The resource was added successfully",
+          });
+
+          const valueResult: Value = {
+            success: true,
+            res: res,
+            value: processedData,
+          };
+
+          if (Tags.length > 0) {
+            !valueResult.attributes && (valueResult.attributes = {});
+            valueResult.attributes.Tag = await Promise.allSettled(
+              Tags.map(async (id: string) => {
+                try {
+                  const createdTag = await dataProvider.create(
+                    "ProductGroupTag",
+                    {
+                      data: {
+                        ProductGroupId: res.data.id,
+                        TagId: id,
+                      },
+                    }
+                  );
+                  return { tag: createdTag, success: true };
+                } catch (err) {
+                  return { success: false, error: err };
+                }
+              })
+            );
+          }
+
+          if (Properties.length > 0) {
+            !valueResult.attributes && (valueResult.attributes = {});
+            valueResult.attributes.Properties = await Promise.allSettled(
+              Properties.map(
+                async (property: { id: string; value: string }) => {
                   try {
-                    const createdTag = await dataProvider.create(
-                      "ProductGroupTag",
+                    const createdProperty = await dataProvider.create(
+                      "ProductGroupProperties",
                       {
                         data: {
                           ProductGroupId: res.data.id,
-                          TagId: id,
+                          PropertiesId: property.id,
+                          Value: property.value,
+                          // borrar
+                          DateUpdate: new Date(),
                         },
                       }
                     );
-                    return { tag: createdTag, success: true };
+                    return { property: createdProperty, success: true };
                   } catch (err) {
-                    return { success: false };
+                    return { success: false, error: err };
                   }
-                })
-              );
-            }
-            if (Properties.length > 0) {
-              !valueResult.attributes && (valueResult.attributes = {});
-              valueResult.attributes.Properties = await Promise.all(
-                Properties.map(
-                  async (property: { id: string; value: string }) => {
-                    try {
-                      const createdProperty = await dataProvider.create(
-                        "ProductGroupProperties",
-                        {
-                          data: {
-                            ProductGroupId: res.data.id,
-                            PropertiesId: property.id,
-                            Value: property.value,
-                            // borrar
-                            DateUpdate: new Date(),
-                          },
-                        }
-                      );
-                      return { property: createdProperty, success: true };
-                    } catch (err) {
-                      console.error("Error creating property:", err);
-                      return { success: false };
-                    }
-                  }
-                )
-              );
-            }
-            return valueResult;
-          })
-          .catch((err) => {
-            const originalEntry = Object.assign({}, csvItems?.[i], {
-              Status: ["There was a problem when adding the resource."],
-            });
-            return {
-              success: false,
-              res: err,
-              value: {
-                Status: originalEntry,
-              },
-            };
+                }
+              )
+            );
+          }
+          return valueResult;
+        } catch (err) {
+          const processedData = Object.assign({}, csvItems?.[i], {
+            "Validation Status": value.report.getDetails(),
+            Status: "There was a problem when adding the resource",
           });
+          return {
+            success: false,
+            res: err,
+            value: processedData,
+          };
+        }
       }
     })
-  ).then((res) => {
-    reportItems.push(...res);
-    return unparse(res.map((res) => res.value));
-  });
-  return [reportItems, csvData];
+  ) ;
+  try {
+    reportItems.push(...csvData);
+    return [reportItems, unparse(csvData.map((data) => data.value))];
+  } catch (err) {
+    console.error("Error parsing data:", err);
+    return [reportItems, []];
+  }
 }
+
+// async function createInDataProviderFallback(
+//   dataProvider: DataProvider,
+//   resource: string,
+//   values: any[],
+//   csvItems?: any[]
+// ): Promise<any> {
+//   const reportItems: ReportItem[] = [];
+//   const csvData = await Promise.all(
+//     values.map((value, i) => {
+//       if (value.report.getErrorStatus()) {
+//         const processedData = Object.assign({}, csvItems?.[i], {
+//           'Validation Status': value.report.getDetails(),
+//           Status: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again"
+//         });
+//         return {
+//           value: processedData,
+//           success: false,
+//           err: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
+//         };
+//       } else {
+//         const { Tags = [], Properties = [], report, ...filteredValue } = value;
+//         return dataProvider
+//           .create(resource, { data: filteredValue })
+//           .then(async (res) => {
+//             const processedData = Object.assign({}, csvItems?.[i], {
+//               'Validation Status': value.report.getDetails(),
+//               Status: "The resource was added successfully",
+//             });
+//             const valueResult: Value = {
+//               success: true,
+//               res: res,
+//               value: processedData,
+//             };
+//             if (Tags.length > 0) {
+//               !valueResult.attributes && (valueResult.attributes = {});
+//               valueResult.attributes.Tag = await Promise.all(
+//                 Tags.map(async (id: string) => {
+//                   try {
+//                     const createdTag = await dataProvider.create(
+//                       "ProductGroupTag",
+//                       {
+//                         data: {
+//                           ProductGroupId: res.data.id,
+//                           TagId: id,
+//                         },
+//                       }
+//                     );
+//                     return { tag: createdTag, success: true };
+//                   } catch (err) {
+//                     return { success: false, error: err };
+//                   }
+//                 })
+//               );
+//             }
+//             if (Properties.length > 0) {
+//               !valueResult.attributes && (valueResult.attributes = {});
+//               valueResult.attributes.Properties = await Promise.all(
+//                 Properties.map(
+//                   async (property: { id: string; value: string }) => {
+//                     try {
+//                       const createdProperty = await dataProvider.create(
+//                         "ProductGroupProperties",
+//                         {
+//                           data: {
+//                             ProductGroupId: res.data.id,
+//                             PropertiesId: property.id,
+//                             Value: property.value,
+//                             // borrar
+//                             DateUpdate: new Date(),
+//                           },
+//                         }
+//                       );
+//                       return { property: createdProperty, success: true };
+//                     } catch (err) {
+//                       return { success: false, error: err };
+//                     }
+//                   }
+//                 )
+//               );
+//             }
+//             return valueResult;
+//           })
+//           .catch((err) => {
+//             const processedData = Object.assign({}, csvItems?.[i], {
+//               'Validation Status': value.report.getDetails(),
+//               Status: "There was a problem when adding the resource",
+//             });
+//             return {
+//               success: false,
+//               res: err,
+//               value: processedData,
+//             };
+//           });
+//       }
+//     })
+//   ).then((res) => {
+//     reportItems.push(...res);
+//     return unparse(res.map((data) => data.value));
+//   });
+//   return [reportItems, csvData];
+// }
 
 async function updateInDataProvider(
   logging: boolean,

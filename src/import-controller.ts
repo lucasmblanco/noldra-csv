@@ -105,6 +105,21 @@ export async function CheckCSVValidation(
   }
 }
 
+// export async function CheckCSVValidationNew(
+//   // logging: boolean,
+//   translate: Translate,
+//   csvValues: any[],
+//   // validateRow?: ValidateRowFunction
+// ): Promise<any[] | void> {
+//   // const logger = makeLogger(logging);
+//   try {
+//     return await Promise.all(csvValues.map(validateRow));
+//   } catch (error) {
+//     // logger.error("CheckCSVValidation", { csvValues }, error);
+//     throw translate("csv.parsing.failedValidateRow");
+//   }
+// }
+
 export async function GetCSVItems(
   logging: boolean,
   translate: Translate,

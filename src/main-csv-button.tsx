@@ -25,7 +25,6 @@ export const MainCsvImport = (props: any) => {
   const dataProvider = useDataProvider();
   const resource = props.resource || useResourceContext();
 
-
   const {
     parseConfig,
     preCommitCallback,
@@ -79,7 +78,7 @@ export const MainCsvImport = (props: any) => {
       return;
     }
     setOpen(true);
-    
+
     async function processCSV(): Promise<[any[], boolean, any[]]> {
       // Is valid csv
       if (!file) {
@@ -95,24 +94,27 @@ export const MainCsvImport = (props: any) => {
 
       const csvItems = transformRows ? await transformRows(csvRows) : csvRows;
 
-      mounted && setValues(csvItems);
+      const csvNew = validateRow
+        ? await Promise.all(csvItems.map(validateRow))
+        : csvItems;
+
+      mounted && setValues(csvNew);
       // Does CSV pass user validation
       logger.log("Validating CSV file");
-      const csvItemsWithValidation = await CheckCSVValidation(
-        logging,
-        translate,
-        csvItems,
-        validateRow
-      );
-
-      setValues(csvItems);
+      // const csvItemsWithValidation = await CheckCSVValidation(
+      //   logging,
+      //   translate,
+      //   csvItems,
+      //   validateRow
+      // );
+      setValues(csvNew);
       // Are there any import overwrites?
       logger.log("Checking rows to import");
       const collidingIds = await GetIdsColliding(
         logging,
         translate,
         dataProvider,
-        csvItemsWithValidation as any[],
+        csvNew,
         resourceName,
         disableGetMany
       );
@@ -120,7 +122,7 @@ export const MainCsvImport = (props: any) => {
       const hasCollidingIds = !!collidingIds.length;
       logger.log("Has colliding ids?", { hasCollidingIds, collidingIds });
       if (!hasCollidingIds) {
-        return [csvItemsWithValidation as any[], hasCollidingIds, ogData];
+        return [csvNew as any[], hasCollidingIds, ogData];
       }
       // Ask Replace X Rows? Skip these rows? Decied For Each?
       const collidingIdsStringsSet = new Set(collidingIds.map((id) => id + ""));
@@ -144,12 +146,21 @@ export const MainCsvImport = (props: any) => {
       logger.log("Importing items which arent colliding", {
         csvItemsNotColliding,
       });
-      return [csvItemsNotColliding, hasCollidingIds, csvItems];
+
+      // const csvNewCheckErrors = csvNew.map((item: any) => {
+      //   if (!item.report.getErrorStatus()) {
+      //     console.log('validado correctamente');
+      //     item.report.setDetails("The row was successfully validated");
+      //   }
+      //   return item;
+      // })
+
+      return [csvNew, hasCollidingIds, csvItems];
     }
 
     processCSV()
-      .then(async ([csvItemsWithValidation, hasCollidingIds, ogData]) => {
-        await createRows(csvItemsWithValidation, ogData);
+      .then(async ([csvNew, hasCollidingIds, ogData]) => {
+        await createRows(csvNew, ogData);
         mounted && !hasCollidingIds && handleClose();
       })
       .catch((error) => {
