@@ -3,7 +3,23 @@ import { SimpleLogger } from "./SimpleLogger";
 import { DataProvider } from "ra-core";
 import type { ParseConfig } from "papaparse";
 import { unparse } from "papaparse";
-import { report } from "process";
+
+interface Value {
+  success: boolean;
+  res: any;
+  value: any;
+  attributes?: any;
+}
+
+interface ReportItem {
+  value: any;
+  success: boolean;
+  err?: any;
+  response?: any;
+}
+
+const CHUNK_SIZE = 10;
+const ATTRIB_CHUNK_SIZE = 5;
 
 let logger = new SimpleLogger("uploader", false);
 
@@ -63,13 +79,6 @@ export async function update(
   if (postCommitCallback) {
     postCommitCallback(reportItems, csvData);
   }
-}
-
-interface ReportItem {
-  value: any;
-  success: boolean;
-  err?: any;
-  response?: any;
 }
 
 export async function createInDataProvider(
@@ -141,12 +150,17 @@ export async function createInDataProvider(
   return reportItems;
 }
 
-interface Value {
-  success: boolean;
-  res: any;
-  value: any;
-  attributes?: { Tag?: any[]; Properties?: any[] };
-}
+export const creationSummary = (values, attribute) => {
+  const successful = values.filter((value) => value.success).length;
+
+  if (successful === values.length) {
+    return `${attribute} successful added`;
+  } else if (successful === 0) {
+    return `No ${attribute} created`;
+  } else {
+    return `Some ${attribute} failed`;
+  }
+};
 
 async function createInDataProviderFallback(
   dataProvider: DataProvider,
@@ -155,210 +169,197 @@ async function createInDataProviderFallback(
   csvItems?: any[]
 ): Promise<any> {
   const reportItems: ReportItem[] = [];
-  const csvData = await Promise.all(
-    values.map(async (value, i) => {
-      if (value.report.getErrorStatus()) {
-        const processedData = Object.assign({}, csvItems?.[i], {
-          "Validation Status": value.report.getDetails(),
-          Status:
-            "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
-        });
-        return {
-          value: processedData,
-          success: false,
-          err: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
-        };
-      } else {
-        const { Tags = [], Properties = [], report, ...filteredValue } = value;
-        try {
-          const res = await dataProvider.create(resource, {
-            data: filteredValue,
-          });
+  let csvDataFinal: (
+    | Value
+    | {
+        value: any;
+        success: boolean;
+        err: string;
+      }
+  )[] = [];
 
-          const processedData = Object.assign({}, csvItems?.[i], {
-            "Validation Status": value.report.getDetails(),
-            Status: "The resource was added successfully",
-          });
-
-          const valueResult: Value = {
-            success: true,
-            res: res,
-            value: processedData,
-          };
-
-          if (Tags.length > 0) {
-            !valueResult.attributes && (valueResult.attributes = {});
-            valueResult.attributes.Tag = await Promise.allSettled(
-              Tags.map(async (id: string) => {
-                try {
-                  const createdTag = await dataProvider.create(
-                    "ProductGroupTag",
-                    {
-                      data: {
-                        ProductGroupId: res.data.id,
-                        TagId: id,
-                      },
-                    }
-                  );
-                  return { tag: createdTag, success: true };
-                } catch (err) {
-                  return { success: false, error: err };
-                }
-              })
-            );
-          }
-
-          if (Properties.length > 0) {
-            !valueResult.attributes && (valueResult.attributes = {});
-            valueResult.attributes.Properties = await Promise.allSettled(
-              Properties.map(
-                async (property: { id: string; value: string }) => {
-                  try {
-                    const createdProperty = await dataProvider.create(
-                      "ProductGroupProperties",
-                      {
-                        data: {
-                          ProductGroupId: res.data.id,
-                          PropertiesId: property.id,
-                          Value: property.value,
-                          // borrar
-                          DateUpdate: new Date(),
-                        },
-                      }
-                    );
-                    return { property: createdProperty, success: true };
-                  } catch (err) {
-                    return { success: false, error: err };
-                  }
-                }
-              )
-            );
-          }
-          return valueResult;
-        } catch (err) {
-          const processedData = Object.assign({}, csvItems?.[i], {
-            "Validation Status": value.report.getDetails(),
-            Status: "There was a problem when adding the resource",
+  for (let i = 0; i < values.length; i += CHUNK_SIZE) {
+    const chunkedValues = values.slice(i, i + CHUNK_SIZE);
+    const chunkedCsvItems = csvItems?.slice(i, i + CHUNK_SIZE);
+    const csvData = await Promise.all(
+      chunkedValues.map(async (value, i) => {
+        if (value.report.getErrorStatus()) {
+          const itemData = Object.assign({}, chunkedCsvItems?.[i], {
+            "row validation": value.report.getDetails(),
+            Status:
+              "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
           });
           return {
+            value: itemData,
             success: false,
-            res: err,
-            value: processedData,
+            err: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
           };
+        } else {
+          const {
+            Tags = [],
+            Properties = [],
+            report,
+            ...filteredValue
+          } = value;
+          try {
+            const res = await dataProvider.create(resource, {
+              data: filteredValue,
+            });
+
+            const itemData = Object.assign({}, chunkedCsvItems?.[i], {
+              "row validation": value.report.getDetails(),
+              Status: "The resource was added successfully",
+            });
+
+            const valueResult: Value = {
+              success: true,
+              res: res,
+              value: itemData,
+            };
+
+            if (Tags.length) {
+              !valueResult.attributes && (valueResult.attributes = {});
+              for (let i = 0; i < Tags.length; i += ATTRIB_CHUNK_SIZE) {
+                const chunkedAttrib = Tags.slice(i, i + ATTRIB_CHUNK_SIZE);
+                const tagsData = await Promise.all(
+                  chunkedAttrib.map(async (id: string) => {
+                    try {
+                      const createdTag = await dataProvider.create(
+                        "ProductGroupTag",
+                        {
+                          data: {
+                            ProductGroupId: res.data.id,
+                            TagId: id,
+                          },
+                        }
+                      );
+                      return { tag: createdTag, success: true };
+                    } catch (err) {
+                      return { success: false, error: err };
+                    }
+                  })
+                );
+                valueResult.attributes.Tag = [
+                  ...valueResult.attributes.Tag,
+                  ...tagsData,
+                ];
+              }
+              /* OLD APPROACH, DOESN'T HAVE ANY SAFEGUARD RELATED TO TAGS DATA LENGTH */
+              // valueResult.attributes.Tag = await Promise.all(
+              //   Tags.map(async (id: string) => {
+              //     try {
+              //       const createdTag = await dataProvider.create(
+              //         "ProductGroupTag",
+              //         {
+              //           data: {
+              //             ProductGroupId: res.data.id,
+              //             TagId: id,
+              //           },
+              //         }
+              //       );
+              //       return { tag: createdTag, success: true };
+              //     } catch (err) {
+              //       return { success: false, error: err };
+              //     }
+              //   })
+              // );
+              /* ------------------------------------- */
+              itemData["Tag status"] = creationSummary(
+                valueResult.attributes.Tag,
+                "tags"
+              );
+            }
+
+            if (Properties.length) {
+              !valueResult.attributes && (valueResult.attributes = {});
+              for (let i = 0; i < Properties.length; i += ATTRIB_CHUNK_SIZE) {
+                const chunkedAttrib = Properties.slice(
+                  i,
+                  i + ATTRIB_CHUNK_SIZE
+                );
+                const propertiesData = await Promise.all(
+                  chunkedAttrib.map(
+                    async (property: { id: string; value: string }) => {
+                      try {
+                        const createdProperty = await dataProvider.create(
+                          "ProductGroupProperties",
+                          {
+                            data: {
+                              ProductGroupId: res.data.id,
+                              PropertiesId: property.id,
+                              Value: property.value,
+                              // borrar
+                              DateUpdate: new Date(),
+                            },
+                          }
+                        );
+                        return { property: createdProperty, success: true };
+                      } catch (err) {
+                        return { success: false, error: err };
+                      }
+                    }
+                  )
+                );
+                valueResult.attributes.Properties = [
+                  ...valueResult.attributes.Properties,
+                  ...propertiesData,
+                ];
+              }
+              /* OLD APPROACH, DOESN'T HAVE ANY SAFEGUARD RELATED TO PROPERTIES DATA LENGTH */
+              // valueResult.attributes.Properties = await Promise.all(
+              //   Properties.map(
+              //     async (property: { id: string; value: string }) => {
+              //       try {
+              //         const createdProperty = await dataProvider.create(
+              //           "ProductGroupProperties",
+              //           {
+              //             data: {
+              //               ProductGroupId: res.data.id,
+              //               PropertiesId: property.id,
+              //               Value: property.value,
+              //               // borrar
+              //               DateUpdate: new Date(),
+              //             },
+              //           }
+              //         );
+              //         return { property: createdProperty, success: true };
+              //       } catch (err) {
+              //         return { success: false, error: err };
+              //       }
+              //     }
+              //   )
+              // );
+              /* ------------------------------------- */
+              itemData["Properties status"] = creationSummary(
+                valueResult.attributes.Properties,
+                "properties"
+              );
+            }
+            return valueResult;
+          } catch (err) {
+            const itemData = Object.assign({}, chunkedCsvItems?.[i], {
+              "row validation": value.report.getDetails(),
+              Status: "There was a problem when adding the resource",
+            });
+            return {
+              success: false,
+              res: err,
+              value: itemData,
+            };
+          }
         }
-      }
-    })
-  ) ;
+      })
+    );
+    csvDataFinal = [...csvDataFinal, ...csvData];
+  }
   try {
-    reportItems.push(...csvData);
-    return [reportItems, unparse(csvData.map((data) => data.value))];
+    reportItems.push(...csvDataFinal);
+    return [reportItems, unparse(csvDataFinal.map((data) => data.value))];
   } catch (err) {
     console.error("Error parsing data:", err);
     return [reportItems, []];
   }
 }
-
-// async function createInDataProviderFallback(
-//   dataProvider: DataProvider,
-//   resource: string,
-//   values: any[],
-//   csvItems?: any[]
-// ): Promise<any> {
-//   const reportItems: ReportItem[] = [];
-//   const csvData = await Promise.all(
-//     values.map((value, i) => {
-//       if (value.report.getErrorStatus()) {
-//         const processedData = Object.assign({}, csvItems?.[i], {
-//           'Validation Status': value.report.getDetails(),
-//           Status: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again"
-//         });
-//         return {
-//           value: processedData,
-//           success: false,
-//           err: "The upload was unsuccessful due to errors in specific fields. Please address the issues and try again",
-//         };
-//       } else {
-//         const { Tags = [], Properties = [], report, ...filteredValue } = value;
-//         return dataProvider
-//           .create(resource, { data: filteredValue })
-//           .then(async (res) => {
-//             const processedData = Object.assign({}, csvItems?.[i], {
-//               'Validation Status': value.report.getDetails(),
-//               Status: "The resource was added successfully",
-//             });
-//             const valueResult: Value = {
-//               success: true,
-//               res: res,
-//               value: processedData,
-//             };
-//             if (Tags.length > 0) {
-//               !valueResult.attributes && (valueResult.attributes = {});
-//               valueResult.attributes.Tag = await Promise.all(
-//                 Tags.map(async (id: string) => {
-//                   try {
-//                     const createdTag = await dataProvider.create(
-//                       "ProductGroupTag",
-//                       {
-//                         data: {
-//                           ProductGroupId: res.data.id,
-//                           TagId: id,
-//                         },
-//                       }
-//                     );
-//                     return { tag: createdTag, success: true };
-//                   } catch (err) {
-//                     return { success: false, error: err };
-//                   }
-//                 })
-//               );
-//             }
-//             if (Properties.length > 0) {
-//               !valueResult.attributes && (valueResult.attributes = {});
-//               valueResult.attributes.Properties = await Promise.all(
-//                 Properties.map(
-//                   async (property: { id: string; value: string }) => {
-//                     try {
-//                       const createdProperty = await dataProvider.create(
-//                         "ProductGroupProperties",
-//                         {
-//                           data: {
-//                             ProductGroupId: res.data.id,
-//                             PropertiesId: property.id,
-//                             Value: property.value,
-//                             // borrar
-//                             DateUpdate: new Date(),
-//                           },
-//                         }
-//                       );
-//                       return { property: createdProperty, success: true };
-//                     } catch (err) {
-//                       return { success: false, error: err };
-//                     }
-//                   }
-//                 )
-//               );
-//             }
-//             return valueResult;
-//           })
-//           .catch((err) => {
-//             const processedData = Object.assign({}, csvItems?.[i], {
-//               'Validation Status': value.report.getDetails(),
-//               Status: "There was a problem when adding the resource",
-//             });
-//             return {
-//               success: false,
-//               res: err,
-//               value: processedData,
-//             };
-//           });
-//       }
-//     })
-//   ).then((res) => {
-//     reportItems.push(...res);
-//     return unparse(res.map((data) => data.value));
-//   });
-//   return [reportItems, csvData];
-// }
 
 async function updateInDataProvider(
   logging: boolean,

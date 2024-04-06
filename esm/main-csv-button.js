@@ -63,7 +63,7 @@ export var MainCsvImport = function (props) {
     var disableNew = !!disableImportNew;
     var disableOverwrite = !!disableImportOverwrite;
     var logging = !!props.logging;
-    var variant = props.variant, label = props.label, resourceName = props.resourceName;
+    var variant = props.variant, label = props.label, resourceName = props.resourceName, chip = props.chip;
     var logger = new SimpleLogger("import-csv-button", true);
     logger.setEnabled(logging);
     if (!resource) {
@@ -354,7 +354,7 @@ export var MainCsvImport = function (props) {
         });
     }); };
     return (React.createElement(React.Fragment, null,
-        React.createElement(ImportButton, { variant: variant, label: label, clickImportButton: clickImportButton, onFileAdded: onFileAdded, onRef: function (ref) { return (refInput = ref); } }),
+        React.createElement(ImportButton, { variant: variant, label: label, clickImportButton: clickImportButton, onFileAdded: onFileAdded, onRef: function (ref) { return (refInput = ref); }, chip: chip }),
         React.createElement(ImportCsvDialogStrategy, { disableImportOverwrite: disableOverwrite, resourceName: resourceName, fileName: fileName, count: values && values.length, handleClose: handleClose, handleReplace: handleReplace, handleSkip: handleSkip, handleAskDecide: handleAskDecide, open: open, isLoading: isLoading, idsConflicting: idsConflicting }),
         React.createElement(ImportCsvDialogEachItem, { disableImportNew: disableNew, disableImportOverwrite: disableOverwrite, currentValue: currentValue, resourceName: resourceName, values: values, fileName: fileName, openAskDecide: openAskDecide, handleClose: handleClose, handleAskDecideReplace: handleAskDecideReplace, handleAskDecideAddAsNew: handleAskDecideAddAsNew, handleAskDecideSkip: handleAskDecideSkip, handleAskDecideSkipAll: handleAskDecideSkipAll, isLoading: isLoading, idsConflicting: idsConflicting })));
 };

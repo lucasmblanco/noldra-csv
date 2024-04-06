@@ -5,6 +5,7 @@ interface ImportButtonProps {
     clickImportButton: () => any;
     onFileAdded: (e: React.ChangeEvent<HTMLInputElement>) => any;
     onRef: (el: HTMLInputElement) => any;
+    chip?: boolean;
 }
 export declare function ImportButton(props: ImportButtonProps): React.JSX.Element;
 export {};

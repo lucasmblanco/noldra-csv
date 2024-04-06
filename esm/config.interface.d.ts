@@ -12,6 +12,14 @@ export interface ImportConfig {
     validateRow?: ValidateRowFunction;
     parseConfig?: ParseConfig;
 }
+export interface Report {
+    errorStatus: boolean;
+    details: string[];
+    getErrorStatus(): boolean;
+    getDetails(): string[];
+    setErrorStatus(status: boolean): void;
+    setDetails(detail: string): void;
+}
 export type PrecommitCallback = (action: "create" | "overwrite", values: any[]) => Promise<any[]>;
-export type ValidateRowFunction = (csvRowItem: any, index?: any, allItems?: any[]) => Promise<void>;
+export type ValidateRowFunction = (csvRowItem: any, index?: any, allItems?: any[]) => Promise<any>;
 export type ErrorCallback = (error: any, file?: any) => void;

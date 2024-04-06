@@ -41,7 +41,7 @@ export const MainCsvImport = (props: any) => {
   const disableOverwrite = !!disableImportOverwrite;
 
   const logging = !!props.logging;
-  let { variant, label, resourceName } = props;
+  let { variant, label, resourceName, chip } = props;
   const logger = new SimpleLogger("import-csv-button", true);
   logger.setEnabled(logging);
 
@@ -316,6 +316,7 @@ export const MainCsvImport = (props: any) => {
         clickImportButton={clickImportButton}
         onFileAdded={onFileAdded}
         onRef={(ref) => (refInput = ref)}
+        chip={chip}
       />
 
       {/* IMPORT DIALOG */}
